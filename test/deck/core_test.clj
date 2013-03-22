@@ -43,7 +43,7 @@
   (let [test-path (rand-filename)
         _ (println "big n data file:" test-path)
         db (deck 0 test-path)
-        n 10000]
+        n 100000]
     (testing "Writing out n events"
       (time
        (dotimes [_ n]

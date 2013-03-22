@@ -67,7 +67,7 @@ Then just replay the events:
 
 deck is not designed for truly high performance, but it does well
 enough. On my 2.2 GHz i7, with a 5400 RPM hard drive, I can write
-about 9K events/s, and read back 100K events/s.
+about 12K simple events/s, and replay 200K simple events/s.
 
 deck is intended for use in situatons where your data model can fit in
 memory (as an event stream and a "current" state).
