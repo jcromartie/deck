@@ -2,6 +2,8 @@
 
 Data is music to your ears.
 
+![an old school tape deck](http://jcromartie.github.com/deck/images/deck.jpg)
+
 You think it would be pretty neat if you could just record everything
 and and play it back later, but it would be even better if you could
 remix it on the fly.
