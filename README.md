@@ -17,7 +17,7 @@ Those events are appended to a file on disk
 To use deck, you just give it some initial state and a path to store
 events in.
 
-    (require [deck.core :as deck])
+    (require '[deck.core :as deck])
     
     (def db (deck/deck {} "./datastore"))
 
@@ -35,7 +35,7 @@ Then you can record an event on the database like this:
     
     ;; the change happens immediately in a transaction
     
-    (assert (= "john" (-> @db :users :john)))
+    (assert (= "john" (-> @db :users :john :name)))
 
 Events are flushed to disk before `record` returns, so you can reload
 them right away.
@@ -44,7 +44,7 @@ them right away.
     
     ;; and make sure your data is still there...
     
-    (assert (= "john" (-> @db :users :john)))
+    (assert (= "john" (-> @db :users :john :name)))
 
 You can redefine your methods on the fly (i.e. in the REPL or by
 reloading namespaces), and then replay the event sequence to see the
