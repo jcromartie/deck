@@ -1,0 +1,4 @@
+;; at Fri Mar 22 11:15:10 EDT 2013
+[:user/add-user "john" "john@example.com"]
+;; at Fri Mar 22 11:15:15 EDT 2013
+[:user/add-user "bob" "bob@example.com"]

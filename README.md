@@ -1,0 +1,86 @@
+# deck
+
+Data is music to your ears.
+
+You think it would be pretty neat if you could just record everything
+and and play it back later, but it would be even better if you could
+remix it on the fly.
+
+Well, now you can (and pretty easily if you ask me).
+
+deck is designed to record and replay *events* on a piece of state.
+
+Those events are appended to a file on disk
+
+## Usage
+
+To use deck, you just give it some initial state and a path to store
+events in.
+
+    (require [deck.core :as deck])
+    
+    (def db (deck/deck {} "./datastore"))
+
+You extend the deck.core/play multimethod to implment your own custom
+events that change your data's state.
+    
+    (defmethod deck/play ::add-user
+      [state [_ name email]]
+      (update-in state [:users]
+        assoc (keyword name) {:name name :email email}))
+
+Then you can record an event on the database like this:
+
+    (deck/record db [::add-user "john" "john@example.com"])
+    
+    ;; the change happens immediately in a transaction
+    
+    (assert (= "john" (-> @db :users :john)))
+
+Events are flushed to disk before `record` returns, so you can reload
+them right away.
+
+    (def db (deck/deck {} "./datastore"))
+    
+    ;; and make sure your data is still there...
+    
+    (assert (= "john" (-> @db :users :john)))
+
+You can redefine your methods on the fly (i.e. in the REPL or by
+reloading namespaces), and then replay the event sequence to see the
+new effect on your data.
+
+Automatic replay is yet to come.
+
+    (defmethod deck/play ::add-user
+      [state [_ name email]]
+      (update-in state [:users]
+        ;; tack on :new-user true, too...
+        assoc (keyword name) {:name name :email email :new-user true}))
+    
+    (deck/replay db)
+    
+    ;; and the new method has been applied...
+    
+    (assert (:new-user (-> @db :users :john)))
+
+## Performance
+
+deck is not designed for truly high performance, but it does well
+enough. On my 2.2 GHz i7, with a 5400 RPM hard drive, I can write
+about 9K events/s, and read back 100K events/s.
+
+deck is intended for use in situatons where your data model can fit in
+memory (as an event stream and a "current" state).
+
+In the future events could be stored and retrieved in different ways,
+such as an RDBMS or HTTP.
+
+The current implementation uses Clojure's refs and agents to handle
+concurrency and serialize writes.
+
+## License
+
+Copyright © 2013 John Cromartie
+
+Distributed under the MIT license.
