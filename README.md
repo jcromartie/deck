@@ -17,9 +17,9 @@ Those events are appended to a file on disk
 To use deck, you just give it some initial state and a path to store
 events in.
 
-    (require '[deck.core :as deck])
+    user=> (require '[deck.core :as deck])
     
-    (def db (deck/deck {} "./datastore"))
+    user=> (def db (deck/deck {} "./datastore"))
 
 You extend the deck.core/play multimethod to implment your own custom
 events that change your data's state.
@@ -31,38 +31,35 @@ events that change your data's state.
 
 Then you can record an event on the database like this:
 
-    (deck/record db [::add-user "john" "john@example.com"])
-    
-    ;; the change happens immediately in a transaction
-    
-    (assert (= "john" (-> @db :users :john :name)))
+    user=> (deck/record db [::add-user "john" "john@example.com"])
+    user=> (assert (= "john" (-> @db :users :john :name)))
 
-Events are flushed to disk before `record` returns, so you can reload
-them right away.
+The change happens immediately in a transaction, and is written to
+disk before `record` returns. Side note; your data file now looks like
+this:
 
-    (def db (deck/deck {} "./datastore"))
-    
-    ;; and make sure your data is still there...
-    
-    (assert (= "john" (-> @db :users :john :name)))
+    ;; at Fri Mar 22 11:42:10 EDT 2013
+    [:user/add-user "john" "john@example.com"]
+
+You can reopen the db from disk and it will replay the events.
+
+    user=> (def db (deck/deck {} "./datastore"))
+    user=> (assert (= "john" (-> @db :users :john :name)))
 
 You can redefine your methods on the fly (i.e. in the REPL or by
-reloading namespaces), and then replay the event sequence to see the
-new effect on your data.
-
-Automatic replay is yet to come.
+reloading namespaces), and replay events to see the new effect on your
+data.
 
     (defmethod deck/play ::add-user
       [state [_ name email]]
       (update-in state [:users]
         ;; tack on :new-user true, too...
         assoc (keyword name) {:name name :email email :new-user true}))
-    
-    (deck/replay db)
-    
-    ;; and the new method has been applied...
-    
-    (assert (:new-user (-> @db :users :john)))
+
+Then just replay the events:
+
+    user=> (deck/replay db)
+    user=> (assert (:new-user (-> @db :users :john)))
 
 ## Performance
 
