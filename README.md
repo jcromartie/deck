@@ -16,6 +16,10 @@ Those events are appended to a file on disk
 
 ## Usage
 
+Include deck as a dependency in your Leiningen `project.clj` with:
+
+    [deck "0.1.0-SNAPSHOT"]
+
 To use deck, you just give it some initial state and a path to store
 events in.
 
