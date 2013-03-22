@@ -1,5 +1,5 @@
 (defproject deck "0.1.0-SNAPSHOT"
-  :description "The little database that could"
-  :url "FIXME.com"
+  :description "Record, play back, and remix your data"
+  :url "https://github.com/jcromartie/deck"
   :license {:name "MIT"}
   :dependencies [[org.clojure/clojure "1.4.0"]])
