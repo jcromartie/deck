@@ -20,28 +20,29 @@ Include deck as a dependency in your Leiningen `project.clj` with:
 
     [deck "0.1.0-SNAPSHOT"]
 
-To use deck, you just give it some initial state and a path to store
-events in.
+To use deck, you just give it a path to store events in, some initial
+state, and a function that updates your data model's state by applying
+events.
 
     user=> (require '[deck.core :as deck])
+    user=> (def db (deck/deck "./datastore" {} handle-event))
     
-    user=> (def db (deck/deck {} "./datastore"))
-
-You extend the deck.core/play multimethod to implment your own custom
-events that change your data's state.
+    ;; P.S. handle-event should be a function of two arguments: the current
+    ;; state, and the event value, and it should return the new state.
     
-    (defmethod deck/play ::add-user
-      [state [_ name email]]
-      (update-in state [:users]
-        assoc (keyword name) {:name name :email email}))
+    (defn handle-event
+      [state event]
+      (if (= ::add-user (first event))
+        (let [[_ name email] event]
+	  (add-user state name email))))
 
 Then you can record an event on the database like this:
 
-    user=> (deck/record db [::add-user "john" "john@example.com"])
+    user=> (deck/record! db [::add-user "john" "john@example.com"])
     user=> (assert (= "john" (-> @db :users :john :name)))
 
 The change happens immediately in a transaction, and is written to
-disk before `record` returns. Side note; your data file now looks like
+disk before `record!` returns. Side note; your data file now looks like
 this:
 
     ;; at Fri Mar 22 11:42:10 EDT 2013
@@ -51,21 +52,6 @@ You can reopen the db from disk and it will replay the events.
 
     user=> (def db (deck/deck {} "./datastore"))
     user=> (assert (= "john" (-> @db :users :john :name)))
-
-You can redefine your methods on the fly (i.e. in the REPL or by
-reloading namespaces), and replay events to see the new effect on your
-data.
-
-    (defmethod deck/play ::add-user
-      [state [_ name email]]
-      (update-in state [:users]
-        ;; tack on :new-user true, too...
-        assoc (keyword name) {:name name :email email :new-user true}))
-
-Then just replay the events:
-
-    user=> (deck/replay db)
-    user=> (assert (:new-user (-> @db :users :john)))
 
 ## Performance
 

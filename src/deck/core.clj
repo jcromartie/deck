@@ -5,24 +5,6 @@
            java.io.FileWriter
            java.util.Date))
 
-(defn- dispatch-play
-  [state [event-name & rest]]
-  (keyword event-name))
-
-(defmulti play
-  "Multimethod.
-
-Define your own event names and implementations to change the state
-of your data.
-
-e.g.
-
-(defmethod play ::add-user
-  [state [_ date username]]
-  (update-in state [:users] conj {:username username :created-at date})
-"
-  (var dispatch-play))
-
 (defprotocol AEventStore
   (store [_ e] "stores event for later retrieval")
   (events [_] "returns all events in store")
@@ -72,26 +54,32 @@ e.g.
       (throw (Exception. "Event is not printable/readable, cannot be recorded")))))
 
 (defprotocol ARecordAndReplay
-  (record [db event] "Apply and store an event to the state of db")
+  (record! [db event] "Apply and store an event (a vector or seq) to the state of
+    db. The current time will be added as the first element of the event")
   (replay [db] "Apply all of the events in the event store to the initial state of the db"))
 
-(defrecord RefDeck [init-state
-                 ^clojure.lang.IReference state-ref
-                 ^deck.core.AEventStore event-store]
+(defrecord RefDeck [^deck.core.AEventStore event-store
+                    ^clojure.lang.IReference state-ref
+                    init-state
+                    event-fn]
 
   clojure.lang.IDeref
-  (deref [_] (deref state-ref))
+  (deref [_]
+    (deref state-ref))
 
   ARecordAndReplay
-  (record [_ e] (let [res (dosync
-                           (check-event e)
-                           (store event-store e)
-                           (alter state-ref play e))]
-                  (flush! event-store)
-                  res))
-  (replay [_] (dosync
-               (let [new-val (reduce play init-state (events event-store))]
-                 (ref-set state-ref new-val)))))
+  (record! [_ e]
+    (let [res (dosync
+               (check-event e)
+               (store event-store e)
+               (alter state-ref event-fn e))]
+      (flush! event-store)
+      res))
+
+  (replay [_]
+    (dosync
+     (let [new-val (reduce event-fn init-state (events event-store))]
+       (ref-set state-ref new-val)))))
 
 (defmethod print-method deck.core.RefDeck
   [d ^java.io.Writer w]
@@ -105,7 +93,7 @@ e.g.
 
 (defn deck
   "Initialize a new deck that can record and play back events"
-  [init-state path]
-  (let [d (RefDeck. init-state (ref init-state) (file-store path))]
+  [store init-state event-fn]
+  (let [d (RefDeck. store (ref init-state) init-state event-fn)]
     (replay d)
     d))
