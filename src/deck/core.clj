@@ -93,7 +93,9 @@
 
 (defn deck
   "Initialize a new deck that can record and play back events"
-  [store init-state event-fn]
-  (let [d (RefDeck. store (ref init-state) init-state event-fn)]
+  [path init-state event-fn]
+  (let [store (file-store path)
+        state-ref (ref init-state)
+        d (RefDeck. store state-ref init-state event-fn)]
     (replay d)
     d))

@@ -11,7 +11,7 @@
 
 (defn make-user-deck
   [path]
-  (deck (file-store path) {} handle-add-user))
+  (deck path {} handle-add-user))
 
 (deftest deck-test
   (let [test-path (rand-filename)
@@ -31,7 +31,7 @@
 
 (defn make-inc-deck
   [path]
-  (deck (file-store path) 0 handle-inc))
+  (deck path 0 handle-inc))
 
 (deftest concurrency-test
   (let [test-path (rand-filename)
